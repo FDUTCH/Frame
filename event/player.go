@@ -234,161 +234,248 @@ var _ player.Handler = (*PlayerHandler)(nil)
 
 // PlayerHandler publishes all events to the internal buses.
 type PlayerHandler struct {
-	buses []*Bus
+	buses       []*Bus
+	busProvider WorldBusProvider
 }
 
-func NewPlayerHandler(buses ...*Bus) *PlayerHandler {
-	return &PlayerHandler{buses: buses}
+func NewPlayerHandler(busProvider WorldBusProvider, buses ...*Bus) *PlayerHandler {
+	return &PlayerHandler{buses: buses, busProvider: busProvider}
+}
+
+func PublishToWorldBus[T any](pl *player.Player, h *PlayerHandler, event T) {
+	if h.busProvider == nil {
+		return
+	}
+	bus, ok := h.busProvider.WorldBus(pl.Tx().World())
+	if ok {
+		Publish(bus, event)
+	}
 }
 
 func (h *PlayerHandler) HandleMove(ctx *player.Context, newPos mgl64.Vec3, newRot cube.Rotation) {
-	PublishMultiple(h.buses, PlayerMoveEvent{Ctx: ctx, NewPos: newPos, NewRot: newRot})
+	ev := PlayerMoveEvent{Ctx: ctx, NewPos: newPos, NewRot: newRot}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleJump(p *player.Player) {
-	PublishMultiple(h.buses, PlayerJumpEvent{Player: p})
+	ev := PlayerJumpEvent{Player: p}
+	PublishToWorldBus(p, h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleTeleport(ctx *player.Context, pos mgl64.Vec3) {
-	PublishMultiple(h.buses, PlayerTeleportEvent{Ctx: ctx, Pos: pos})
+	ev := PlayerTeleportEvent{Ctx: ctx, Pos: pos}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleChangeWorld(p *player.Player, before, after *world.World) {
-	PublishMultiple(h.buses, PlayerChangeWorldEvent{Player: p, Before: before, After: after})
+	ev := PlayerChangeWorldEvent{Player: p, Before: before, After: after}
+	PublishToWorldBus(p, h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleToggleSprint(ctx *player.Context, after bool) {
-	PublishMultiple(h.buses, PlayerToggleSprintEvent{Ctx: ctx, After: after})
+	ev := PlayerToggleSprintEvent{Ctx: ctx, After: after}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleToggleSneak(ctx *player.Context, after bool) {
-	PublishMultiple(h.buses, PlayerToggleSneakEvent{Ctx: ctx, After: after})
+	ev := PlayerToggleSneakEvent{Ctx: ctx, After: after}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleChat(ctx *player.Context, message *string) {
-	PublishMultiple(h.buses, PlayerChatEvent{Ctx: ctx, Message: message})
+	ev := PlayerChatEvent{Ctx: ctx, Message: message}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleFoodLoss(ctx *player.Context, from int, to *int) {
-	PublishMultiple(h.buses, PlayerFoodLossEvent{Ctx: ctx, From: from, To: to})
+	ev := PlayerFoodLossEvent{Ctx: ctx, From: from, To: to}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleHeal(ctx *player.Context, health *float64, src world.HealingSource) {
-	PublishMultiple(h.buses, PlayerHealEvent{Ctx: ctx, Health: health, Src: src})
+	ev := PlayerHealEvent{Ctx: ctx, Health: health, Src: src}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleHurt(ctx *player.Context, damage *float64, immune bool, attackImmunity *time.Duration, src world.DamageSource) {
-	PublishMultiple(h.buses, PlayerHurtEvent{Ctx: ctx, Damage: damage, Immune: immune, AttackImmunity: attackImmunity, Src: src})
+	ev := PlayerHurtEvent{Ctx: ctx, Damage: damage, Immune: immune, AttackImmunity: attackImmunity, Src: src}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleSetOnFire(ctx *player.Context, duration *time.Duration) {
-	PublishMultiple(h.buses, PlayerSetOnFireEvent{Ctx: ctx, Duration: duration})
+	ev := PlayerSetOnFireEvent{Ctx: ctx, Duration: duration}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleDeath(p *player.Player, src world.DamageSource, keepInv *bool) {
-	PublishMultiple(h.buses, PlayerDeathEvent{Player: p, Src: src, KeepInv: keepInv})
+	ev := PlayerDeathEvent{Player: p, Src: src, KeepInv: keepInv}
+	PublishToWorldBus(p, h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleRespawn(p *player.Player, pos *mgl64.Vec3, w **world.World) {
-	PublishMultiple(h.buses, PlayerRespawnEvent{Player: p, Pos: pos, World: w})
+	ev := PlayerRespawnEvent{Player: p, Pos: pos, World: w}
+	PublishToWorldBus(p, h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleSkinChange(ctx *player.Context, skin *skin.Skin) {
-	PublishMultiple(h.buses, PlayerSkinChangeEvent{Ctx: ctx, Skin: skin})
+	ev := PlayerSkinChangeEvent{Ctx: ctx, Skin: skin}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleFireExtinguish(ctx *player.Context, pos cube.Pos) {
-	PublishMultiple(h.buses, PlayerFireExtinguishEvent{Ctx: ctx, Pos: pos})
+	ev := PlayerFireExtinguishEvent{Ctx: ctx, Pos: pos}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleStartBreak(ctx *player.Context, pos cube.Pos) {
-	PublishMultiple(h.buses, PlayerStartBreakEvent{Ctx: ctx, Pos: pos})
+	ev := PlayerStartBreakEvent{Ctx: ctx, Pos: pos}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleBlockBreak(ctx *player.Context, pos cube.Pos, drops *[]item.Stack, xp *int) {
-	PublishMultiple(h.buses, PlayerBlockBreakEvent{Ctx: ctx, Pos: pos, Drops: drops, Xp: xp})
+	ev := PlayerBlockBreakEvent{Ctx: ctx, Pos: pos, Drops: drops, Xp: xp}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleBlockPlace(ctx *player.Context, pos cube.Pos, b world.Block) {
-	PublishMultiple(h.buses, PlayerBlockPlaceEvent{Ctx: ctx, Pos: pos, B: b})
+	ev := PlayerBlockPlaceEvent{Ctx: ctx, Pos: pos, B: b}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleBlockPick(ctx *player.Context, pos cube.Pos, b world.Block) {
-	PublishMultiple(h.buses, PlayerBlockPickEvent{Ctx: ctx, Pos: pos, B: b})
+	ev := PlayerBlockPickEvent{Ctx: ctx, Pos: pos, B: b}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemUse(ctx *player.Context) {
-	PublishMultiple(h.buses, PlayerItemUseEvent{Ctx: ctx})
+	ev := PlayerItemUseEvent{Ctx: ctx}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemUseOnBlock(ctx *player.Context, pos cube.Pos, face cube.Face, clickPos mgl64.Vec3) {
-	PublishMultiple(h.buses, PlayerItemUseOnBlockEvent{Ctx: ctx, Pos: pos, Face: face, ClickPos: clickPos})
+	ev := PlayerItemUseOnBlockEvent{Ctx: ctx, Pos: pos, Face: face, ClickPos: clickPos}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemUseOnEntity(ctx *player.Context, e world.Entity) {
-	PublishMultiple(h.buses, PlayerItemUseOnEntityEvent{Ctx: ctx, E: e})
+	ev := PlayerItemUseOnEntityEvent{Ctx: ctx, E: e}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemRelease(ctx *player.Context, item item.Stack, dur time.Duration) {
-	PublishMultiple(h.buses, PlayerItemReleaseEvent{Ctx: ctx, Item: item, Dur: dur})
+	ev := PlayerItemReleaseEvent{Ctx: ctx, Item: item, Dur: dur}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemConsume(ctx *player.Context, item item.Stack) {
-	PublishMultiple(h.buses, PlayerItemConsumeEvent{Ctx: ctx, Item: item})
+	ev := PlayerItemConsumeEvent{Ctx: ctx, Item: item}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleAttackEntity(ctx *player.Context, e world.Entity, force, height *float64, critical *bool) {
-	PublishMultiple(h.buses, PlayerAttackEntityEvent{Ctx: ctx, E: e, Force: force, Height: height, Critical: critical})
+	ev := PlayerAttackEntityEvent{Ctx: ctx, E: e, Force: force, Height: height, Critical: critical}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleExperienceGain(ctx *player.Context, amount *int) {
-	PublishMultiple(h.buses, PlayerExperienceGainEvent{Ctx: ctx, Amount: amount})
+	ev := PlayerExperienceGainEvent{Ctx: ctx, Amount: amount}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandlePunchAir(ctx *player.Context) {
-	PublishMultiple(h.buses, PlayerPunchAirEvent{Ctx: ctx})
+	ev := PlayerPunchAirEvent{Ctx: ctx}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleSignEdit(ctx *player.Context, pos cube.Pos, frontSide bool, oldText, newText string) {
-	PublishMultiple(h.buses, PlayerSignEditEvent{Ctx: ctx, Pos: pos, FrontSide: frontSide, OldText: oldText, NewText: newText})
+	ev := PlayerSignEditEvent{Ctx: ctx, Pos: pos, FrontSide: frontSide, OldText: oldText, NewText: newText}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleSleep(ctx *player.Context, sendReminder *bool) {
-	PublishMultiple(h.buses, PlayerSleepEvent{Ctx: ctx, SendReminder: sendReminder})
+	ev := PlayerSleepEvent{Ctx: ctx, SendReminder: sendReminder}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleLecternPageTurn(ctx *player.Context, pos cube.Pos, oldPage int, newPage *int) {
-	PublishMultiple(h.buses, PlayerLecternPageTurnEvent{Ctx: ctx, Pos: pos, OldPage: oldPage, NewPage: newPage})
+	ev := PlayerLecternPageTurnEvent{Ctx: ctx, Pos: pos, OldPage: oldPage, NewPage: newPage}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemDamage(ctx *player.Context, i item.Stack, damage *int) {
-	PublishMultiple(h.buses, PlayerItemDamageEvent{Ctx: ctx, Item: i, Damage: damage})
+	ev := PlayerItemDamageEvent{Ctx: ctx, Item: i, Damage: damage}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemPickup(ctx *player.Context, i *item.Stack) {
-	PublishMultiple(h.buses, PlayerItemPickupEvent{Ctx: ctx, I: i})
+	ev := PlayerItemPickupEvent{Ctx: ctx, I: i}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleHeldSlotChange(ctx *player.Context, from, to int) {
-	PublishMultiple(h.buses, PlayerHeldSlotChangeEvent{Ctx: ctx, From: from, To: to})
+	ev := PlayerHeldSlotChangeEvent{Ctx: ctx, From: from, To: to}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleItemDrop(ctx *player.Context, s item.Stack) {
-	PublishMultiple(h.buses, PlayerItemDropEvent{Ctx: ctx, S: s})
+	ev := PlayerItemDropEvent{Ctx: ctx, S: s}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleTransfer(ctx *player.Context, addr *net.UDPAddr) {
-	PublishMultiple(h.buses, PlayerTransferEvent{Ctx: ctx, Addr: addr})
+	ev := PlayerTransferEvent{Ctx: ctx, Addr: addr}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleCommandExecution(ctx *player.Context, command cmd.Command, args []string) {
-	PublishMultiple(h.buses, PlayerCommandExecutionEvent{Ctx: ctx, Command: command, Args: args})
+	ev := PlayerCommandExecutionEvent{Ctx: ctx, Command: command, Args: args}
+	PublishToWorldBus(ctx.Player(), h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleQuit(p *player.Player) {
-	PublishMultiple(h.buses, PlayerQuitEvent{Player: p})
+	ev := PlayerQuitEvent{Player: p}
+	PublishToWorldBus(p, h, ev)
+	PublishMultiple(h.buses, ev)
 }
 
 func (h *PlayerHandler) HandleDiagnostics(p *player.Player, d session.Diagnostics) {
-	PublishMultiple(h.buses, PlayerDiagnosticsEvent{Player: p, Diagnostics: d})
+	ev := PlayerDiagnosticsEvent{Player: p, Diagnostics: d}
+	PublishToWorldBus(p, h, ev)
+	PublishMultiple(h.buses, ev)
 }

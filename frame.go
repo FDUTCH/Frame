@@ -87,8 +87,12 @@ func (f *Frame) CloseAfterServer(closer io.Closer) {
 func (f *Frame) Run() {
 	f.srv.Listen()
 	for pl := range f.srv.Accept() {
-		event.Publish(f.generalBus, event.PlayerJoinEvent{Player: pl})
-		pl.Handle(event.NewPlayerHandler(f.generalBus))
+		ev := event.PlayerJoinEvent{Player: pl}
+		if bus, ok := f.WorldBus(pl.Tx().World()); ok {
+			event.Publish(bus, ev)
+		}
+		event.Publish(f.generalBus, ev)
+		pl.Handle(event.NewPlayerHandler(f, f.generalBus))
 	}
 }
 
