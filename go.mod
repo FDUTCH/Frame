@@ -1,4 +1,4 @@
-module github.com/FDUTCH/frame
+module github.com/FDUTCH/Frame
 
 go 1.26.0
 

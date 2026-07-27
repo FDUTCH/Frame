@@ -3,8 +3,8 @@ package main
 import (
 	"log/slog"
 
-	Frame "github.com/FDUTCH/frame"
-	"github.com/FDUTCH/frame/event"
+	Frame "github.com/FDUTCH/Frame"
+	"github.com/FDUTCH/Frame/event"
 	"github.com/df-mc/dragonfly/server"
 )
 
