@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/FDUTCH/Frame/event"
+	"github.com/FDUTCH/Frame/storage"
 	"github.com/df-mc/dragonfly/server"
 	"github.com/df-mc/dragonfly/server/world"
 )
@@ -15,8 +16,9 @@ import (
 type Frame struct {
 	logger *slog.Logger
 
-	srv        *server.Server
-	generalBus *event.Bus
+	srv            *server.Server
+	generalBus     *event.Bus
+	generalStorage *storage.Storage
 
 	closeBeforeServer []io.Closer
 	closeAfterServer  []io.Closer
@@ -26,10 +28,15 @@ type Frame struct {
 	worlds sync.Map
 }
 
+// GeneralStorage returns general storage.
+func (f *Frame) GeneralStorage() *storage.Storage {
+	return f.generalStorage
+}
+
 // NewFrame creates new Frame instance.
 func NewFrame(config server.Config) *Frame {
 	srv := config.New()
-	f := &Frame{srv: srv, logger: config.Log.With("src", "FRAME"), generalBus: event.NewBus()}
+	f := &Frame{srv: srv, logger: config.Log.With("src", "FRAME"), generalBus: event.NewBus(), generalStorage: storage.NewStorage()}
 	f.AddWorld(srv.World())
 	f.AddWorld(srv.Nether())
 	f.AddWorld(srv.End())
