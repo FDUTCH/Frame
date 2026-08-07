@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/FDUTCH/Frame/event"
 	"github.com/FDUTCH/Frame/storage"
@@ -101,6 +104,16 @@ func (f *Frame) Run() {
 		event.Publish(f.generalBus, ev)
 		pl.Handle(event.NewPlayerHandler(f, f.generalBus))
 	}
+}
+
+// CloseOnProgramEnd closes current Frame instance.
+func (f *Frame) CloseOnProgramEnd() {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-c
+		_ = f.Close()
+	}()
 }
 
 // Server returns server.
