@@ -102,7 +102,7 @@ func (f *Frame) Run() {
 			event.Publish(bus, ev)
 		}
 		event.Publish(f.generalBus, ev)
-		pl.Handle(playerHandler{PlayerHandler: event.NewPlayerHandler(f, f.generalBus), f: f})
+		pl.Handle(newPlayerHandler(f))
 	}
 }
 
