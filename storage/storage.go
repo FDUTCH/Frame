@@ -21,8 +21,13 @@ func Set[T any](s *Storage, val T) {
 
 // Get returns the value.
 func Get[T any](s *Storage) (T, bool) {
-	val, ok := s.storage[reflect.TypeOf((*T)(nil)).Elem()]
-	return val.(T), ok
+	var val T
+	v, ok := s.storage[reflect.TypeOf((*T)(nil)).Elem()]
+	if !ok {
+		return val, false
+	}
+	val, ok = v.(T)
+	return val, ok
 }
 
 // GetOr returns the value or a value 'or'.
